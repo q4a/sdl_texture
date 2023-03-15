@@ -33,5 +33,5 @@ jobs:
       working-directory: ${{ matrix.folder }}/build
       run: |
         ninja
-        file ./${{ matrix.configuration }}/${{ matrix.folder }}
-        ldd ./${{ matrix.configuration }}/${{ matrix.folder }}
+        file ./bin/${{ matrix.folder }}
+        ldd ./bin/${{ matrix.folder }}
