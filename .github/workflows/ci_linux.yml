@@ -1,0 +1,37 @@
+name: Linux CI
+
+on: [push, pull_request]
+
+jobs:
+  linux:
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        nine: [ON, OFF]
+        folder: [sdl_d3d9_texture]
+        configuration: [Debug]
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    - name: Install common libs
+      run: sudo apt-get update && sudo apt-get install libglm-dev libsdl2-dev ninja-build
+    - name: Install libs for Gallium Nine build
+      if: ${{ matrix.nine == 'ON' }}
+      run: sudo apt-get install libx11-dev libxcb-present-dev libxcb-dri3-dev libxcb-xfixes0-dev libx11-xcb-dev libdrm-dev libd3dadapter9-mesa-dev
+    - name: Install libs for DXVK Native build
+      if: ${{ matrix.nine == 'OFF' }}
+      run: sudo apt-get install libvulkan-dev glslang-tools meson
+    - name: Configure
+      run: |
+        export CC=gcc && export CXX=g++
+        mkdir ${{ matrix.folder }}/build && cd ${{ matrix.folder }}/build
+        cmake .. -G Ninja -DUSE_NINE=${{ matrix.nine }} -DCMAKE_BUILD_TYPE=${{ matrix.configuration }}
+    - name: Build and check file
+      working-directory: ${{ matrix.folder }}/build
+      run: |
+        ninja
+        file ./bin/${{ matrix.folder }}
+        ldd ./bin/${{ matrix.folder }}
