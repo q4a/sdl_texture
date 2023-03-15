@@ -14,7 +14,6 @@
 #define __d3d_utility__
 
 #include <d3d9.h>
-#include <d3dx9.h>
 #include <SDL2/SDL.h>
 #include <string>
 
