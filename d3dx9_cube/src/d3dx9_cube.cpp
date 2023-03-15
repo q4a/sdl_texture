@@ -61,7 +61,7 @@ bool Setup()
 	//
 	D3DXCreateTextureFromFile(
 		Device,
-		"crate.jpg",
+		"cursor.dds",
 		&Tex);
 
 	// 
