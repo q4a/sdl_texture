@@ -9,7 +9,7 @@ jobs:
       fail-fast: false
       matrix:
         configuration: [msvc-debug]
-        folder: [sdl_d3d9_texture]
+        folder: [sdl_d3d9_texture, sdl_d3d9_cube]
     steps:
     - uses: actions/checkout@v3
       with:
