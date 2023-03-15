@@ -8,16 +8,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        configuration: [Debug]
         folder: [sdl_d3d9_texture]
         nine: [ON, OFF]
+        configuration: [Debug]
 
     steps:
     - uses: actions/checkout@v3
       with:
         fetch-depth: 0
     - name: Install common libs
-      run: sudo apt-get update && sudo apt-get install libsdl2-dev ninja-build
+      run: sudo apt-get update && sudo apt-get install libglm-dev libsdl2-dev ninja-build
     - name: Install libs for Gallium Nine build
       if: ${{ matrix.nine == 'ON' }}
       run: sudo apt-get install libx11-dev libxcb-present-dev libxcb-dri3-dev libxcb-xfixes0-dev libx11-xcb-dev libdrm-dev libd3dadapter9-mesa-dev
