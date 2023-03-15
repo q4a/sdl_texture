@@ -9,7 +9,6 @@
 IDirect3DDevice9* Device = 0;
 const int Width = 640;
 const int Height = 480;
-const int SECOND = 1000;
 
 IDirect3DVertexBuffer9* Quad = 0;
 IDirect3DTexture9*      Tex  = 0;
