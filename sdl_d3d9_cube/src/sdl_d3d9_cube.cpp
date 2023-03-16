@@ -81,6 +81,10 @@ inline D3DMATRIX Matrix4GlmToD3d(const glm::mat4& mat)
 }
 #endif
 
+// camera
+static float cameraAngle  = (3.0f * FLT_PI) / 2.0f;
+static float cameraHeight = 2.0f;
+
 HRESULT CreateTextureFromFile(
 	IDirect3DDevice9 *device,
 	const char *srcfile,
@@ -172,36 +176,21 @@ void Cleanup()
 	d3d::Release<IDirect3DTexture9*>(Tex);
 }
 
-void ShowPrimitive(SDL_Event ev, float deltaTime)
+void ShowPrimitive()
 {
 	if (Device)
 	{
 
 		// Update the scene: update camera position.
 
-		static float angle  = (3.0f * FLT_PI) / 2.0f;
-		static float height = 2.0f;
-
-		if(ev.type == SDL_KEYDOWN && ev.key.keysym.scancode == SDL_SCANCODE_A)
-			angle -= 0.5f * deltaTime;
-
-		if(ev.type == SDL_KEYDOWN && ev.key.keysym.scancode == SDL_SCANCODE_D)
-			angle += 0.5f * deltaTime;
-
-		if(ev.type == SDL_KEYDOWN && ev.key.keysym.scancode == SDL_SCANCODE_W)
-			height += 5.0f * deltaTime;
-
-		if(ev.type == SDL_KEYDOWN && ev.key.keysym.scancode == SDL_SCANCODE_S)
-			height -= 5.0f * deltaTime;
-
 #ifdef _WIN32
-		D3DXVECTOR3 position( cosf(angle) * 3.0f, height, sinf(angle) * 3.0f );
+		D3DXVECTOR3 position( cosf(cameraAngle) * 3.0f, cameraHeight, sinf(cameraAngle) * 3.0f );
 		D3DXVECTOR3 target(0.0f, 0.0f, 0.0f);
 		D3DXVECTOR3 up(0.0f, 1.0f, 0.0f);
 		D3DXMATRIX V;
 		D3DXMatrixLookAtLH(&V, &position, &target, &up);
 #else
-		glm::vec3 position(cosf(angle) * 3.0f, height, sinf(angle) * 3.0f);
+		glm::vec3 position(cosf(cameraAngle) * 3.0f, cameraHeight, sinf(cameraAngle) * 3.0f);
 		glm::vec3 target(0.0f, 0.0f, 0.0f);
 		glm::vec3 up(0.0f, 1.0f, 0.0f);
 		glm::mat4 glmV = glm::lookAtLH(position, target, up);
@@ -274,30 +263,38 @@ int main(int argc, char* argv[]) {
 		return 0;
 	}
 
+	float currentFrame;
 	float deltaTime = 0.0f;
-	float lastFrame = 0.0f;//SDL_GetTicks() / 1000.0f;
-	//double deltaTime = 0;
-	//uint64_t lastFrame = SDL_GetPerformanceCounter();
+	float lastFrame = 0.0f;
+	SDL_Event ev;
+	const uint8_t* keystate;
 	bool running = true;
 	while (running)
 	{
-		SDL_Event ev;
+		keystate = SDL_GetKeyboardState(nullptr);
 		while (SDL_PollEvent(&ev))
 		{
-			float currentFrame = SDL_GetTicks() / 1000.0f;
-			deltaTime = currentFrame - lastFrame;
-			lastFrame = currentFrame;
-			//float currentFrame = SDL_GetPerformanceCounter();
-			//deltaTime = (double)((currentFrame - lastFrame) / (double)SDL_GetPerformanceFrequency());
-			//lastFrame = currentFrame;
 			if ((ev.type == SDL_QUIT) ||
 				(ev.type == SDL_KEYDOWN && ev.key.keysym.scancode == SDL_SCANCODE_ESCAPE))
 			{
 				running = false;
 				break;
 			}
-			ShowPrimitive(ev, deltaTime);
 		}
+		if (keystate[SDL_SCANCODE_W])
+			cameraHeight += 5.0f * deltaTime;
+		if (keystate[SDL_SCANCODE_S])
+			cameraHeight -= 5.0f * deltaTime;
+		if (keystate[SDL_SCANCODE_A])
+			cameraAngle -= 2.0f * deltaTime;
+		if (keystate[SDL_SCANCODE_D])
+			cameraAngle += 2.0f * deltaTime;
+
+		currentFrame = SDL_GetTicks() / 1000.0f;
+		deltaTime = currentFrame - lastFrame;
+		lastFrame = currentFrame;
+
+		ShowPrimitive();
 	}
 
 	//Cleaning up everything.
