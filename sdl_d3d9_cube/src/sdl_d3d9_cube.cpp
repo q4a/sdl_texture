@@ -71,12 +71,12 @@ const std::unordered_map<gli::format, D3DFORMAT> gli_format_map{
 
 inline D3DMATRIX Matrix4GlmToD3d(const glm::mat4& mat)
 {
-	D3DMATRIX matrix(
+	D3DMATRIX matrix = {
 		mat[0][0], mat[0][1], mat[0][2], mat[0][3],
 		mat[1][0], mat[1][1], mat[1][2], mat[1][3],
 		mat[2][0], mat[2][1], mat[2][2], mat[2][3],
 		mat[3][0], mat[3][1], mat[3][2], mat[3][3]
-	);
+	};
 	return matrix;
 }
 #endif
@@ -127,7 +127,7 @@ bool Setup()
 	// Set a directional light.
 
 	D3DLIGHT9 light;
-	::ZeroMemory(&light, sizeof(light));
+	memset(&light, 0, sizeof(light));
 	light.Type      = D3DLIGHT_DIRECTIONAL;
 	light.Ambient   = D3DCOLORVALUE(0.8f, 0.8f, 0.8f, 1.0f);
 	light.Diffuse   = D3DCOLORVALUE(1.0f, 1.0f, 1.0f, 1.0f);

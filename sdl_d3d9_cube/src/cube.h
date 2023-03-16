@@ -13,7 +13,7 @@
 #ifndef __cubeH__
 #define __cubeH__
 
-#include <d3dx9.h>
+#include <d3d9.h>
 #include <string>
 
 class Cube
