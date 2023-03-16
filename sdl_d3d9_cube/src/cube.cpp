@@ -113,7 +113,7 @@ Cube::~Cube()
 	if(_ib){_ib->Release(); _ib = 0;}
 }
 
-bool Cube::draw(D3DXMATRIX* world, D3DMATERIAL9* mtrl, IDirect3DTexture9* tex)
+bool Cube::draw(D3DMATRIX* world, D3DMATERIAL9* mtrl, IDirect3DTexture9* tex)
 {
 	if( world )
 		_device->SetTransform(D3DTS_WORLD, world);
