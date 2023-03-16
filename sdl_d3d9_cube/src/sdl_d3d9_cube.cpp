@@ -63,6 +63,20 @@ const std::unordered_map<gli::format, D3DFORMAT> gli_format_map{
 	{ gli::FORMAT_RGBA_DXT5_UNORM_BLOCK16, D3DFMT_DXT5 },
 	{ gli::FORMAT_RGBA_DXT5_SRGB_BLOCK16, D3DFMT_DXT5 },
 };
+
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
+inline D3DMATRIX Matrix4GlmToD3d(const glm::mat4& mat)
+{
+	D3DMATRIX matrix(
+		mat[0][0], mat[0][1], mat[0][2], mat[0][3],
+		mat[1][0], mat[1][1], mat[1][2], mat[1][3],
+		mat[2][0], mat[2][1], mat[2][2], mat[2][3],
+		mat[3][0], mat[3][1], mat[3][2], mat[3][3]
+	);
+	return matrix;
+}
 #endif
 
 HRESULT CreateTextureFromFile(
@@ -178,11 +192,19 @@ void ShowPrimitive(SDL_Event ev, float deltaTime)
 		if(ev.type == SDL_KEYDOWN && ev.key.keysym.scancode == SDL_SCANCODE_S)
 			height -= 5.0f * deltaTime;
 
+#ifdef _WIN32
 		D3DXVECTOR3 position( cosf(angle) * 3.0f, height, sinf(angle) * 3.0f );
 		D3DXVECTOR3 target(0.0f, 0.0f, 0.0f);
 		D3DXVECTOR3 up(0.0f, 1.0f, 0.0f);
 		D3DXMATRIX V;
 		D3DXMatrixLookAtLH(&V, &position, &target, &up);
+#else
+		glm::vec3 position(cosf(angle) * 3.0f, height, sinf(angle) * 3.0f);
+		glm::vec3 target(0.0f, 0.0f, 0.0f);
+		glm::vec3 up(0.0f, 1.0f, 0.0f);
+		glm::mat4 glmV = glm::lookAtLH(position, target, up);
+		D3DMATRIX V = Matrix4GlmToD3d(glmV);
+#endif
 
 		Device->SetTransform(D3DTS_VIEW, &V);
 
