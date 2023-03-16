@@ -14,7 +14,6 @@
 #define __d3d_utility__
 
 #include <d3d9.h>
-#include <d3dx9.h>
 #include <SDL2/SDL.h>
 #include <string>
 
@@ -46,12 +45,12 @@ namespace d3d
 		}
 	}
 
-	const D3DXCOLOR      WHITE( D3DCOLOR_XRGB(255, 255, 255) );
-	const D3DXCOLOR      BLACK( D3DCOLOR_XRGB(  0,   0,   0) );
+	const D3DCOLORVALUE      WHITE = { 1.0f, 1.0f, 1.0f, 1.0f };
+	const D3DCOLORVALUE      BLACK = { 0.0f, 0.0f, 0.0f, 1.0f };
 
 	// Materials
 
-	D3DMATERIAL9 InitMtrl(D3DXCOLOR a, D3DXCOLOR d, D3DXCOLOR s, D3DXCOLOR e, float p);
+	D3DMATERIAL9 InitMtrl(D3DCOLORVALUE a, D3DCOLORVALUE d, D3DCOLORVALUE s, D3DCOLORVALUE e, float p);
 	const D3DMATERIAL9 WHITE_MTRL  = InitMtrl(WHITE, WHITE, WHITE, BLACK, 2.0f);
 }
 

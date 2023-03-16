@@ -117,7 +117,7 @@ bool d3d::InitD3D(
 	return true;
 }
 
-D3DMATERIAL9 d3d::InitMtrl(D3DXCOLOR a, D3DXCOLOR d, D3DXCOLOR s, D3DXCOLOR e, float p)
+D3DMATERIAL9 d3d::InitMtrl(D3DCOLORVALUE a, D3DCOLORVALUE d, D3DCOLORVALUE s, D3DCOLORVALUE e, float p)
 {
 	D3DMATERIAL9 mtrl;
 	mtrl.Ambient  = a;

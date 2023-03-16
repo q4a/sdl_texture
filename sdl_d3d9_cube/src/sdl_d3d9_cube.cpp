@@ -55,6 +55,7 @@ D3DMATRIX* MatrixPerspectiveFovLH(D3DMATRIX* pout, float fovy, float aspect, flo
 
 #ifdef _WIN32
 #include <d3dx9.h>
+#define FLT_PI D3DX_PI
 #else
 #include <unordered_map>
 #include <gli/gli.hpp>
@@ -66,6 +67,7 @@ const std::unordered_map<gli::format, D3DFORMAT> gli_format_map{
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#define FLT_PI glm::pi<float>()
 
 inline D3DMATRIX Matrix4GlmToD3d(const glm::mat4& mat)
 {
@@ -127,10 +129,10 @@ bool Setup()
 	D3DLIGHT9 light;
 	::ZeroMemory(&light, sizeof(light));
 	light.Type      = D3DLIGHT_DIRECTIONAL;
-	light.Ambient   = D3DXCOLOR(0.8f, 0.8f, 0.8f, 1.0f);
-	light.Diffuse   = D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f);
-	light.Specular  = D3DXCOLOR(0.2f, 0.2f, 0.2f, 1.0f);
-	light.Direction = D3DXVECTOR3(1.0f, -1.0f, 0.0f);
+	light.Ambient   = D3DCOLORVALUE(0.8f, 0.8f, 0.8f, 1.0f);
+	light.Diffuse   = D3DCOLORVALUE(1.0f, 1.0f, 1.0f, 1.0f);
+	light.Specular  = D3DCOLORVALUE(0.2f, 0.2f, 0.2f, 1.0f);
+	light.Direction = D3DVECTOR(1.0f, -1.0f, 0.0f);
 	Device->SetLight(0, &light);
 	Device->LightEnable(0, true);
 
@@ -177,7 +179,7 @@ void ShowPrimitive(SDL_Event ev, float deltaTime)
 
 		// Update the scene: update camera position.
 
-		static float angle  = (3.0f * D3DX_PI) / 2.0f;
+		static float angle  = (3.0f * FLT_PI) / 2.0f;
 		static float height = 2.0f;
 
 		if(ev.type == SDL_KEYDOWN && ev.key.keysym.scancode == SDL_SCANCODE_A)
