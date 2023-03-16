@@ -22,7 +22,7 @@ bool SkyBox::InitSkyBox(int scale)
 {
     // create vertex coordinates
     if (FAILED(_device->CreateVertexBuffer(
-        20 * sizeof(TVertex),
+        24 * sizeof(TVertex),
         D3DUSAGE_WRITEONLY,
         FVF_TVERTEX,
         D3DPOOL_MANAGED,
@@ -35,41 +35,47 @@ bool SkyBox::InitSkyBox(int scale)
     TVertex* v = 0;
     _vb->Lock(0, 0, (void**)&v, 0);
 
-    // positive x
+    // positive x - front face
     v[0] = TVertex(1.0f*scale, -1.0f*scale,  1.0f*scale, 0.0f, 1.0f);
     v[1] = TVertex(1.0f*scale,  1.0f*scale,  1.0f*scale, 0.0f, 0.0f);
     v[2] = TVertex(1.0f*scale,  1.0f*scale, -1.0f*scale, 1.0f, 0.0f);
     v[3] = TVertex(1.0f*scale, -1.0f*scale, -1.0f*scale, 1.0f, 1.0f);
 
-    // negative x
+    // negative x - back face
     v[4] = TVertex(-1.0f*scale, -1.0f*scale, -1.0f*scale, 0.0f, 1.0f);
     v[5] = TVertex(-1.0f*scale,  1.0f*scale, -1.0f*scale, 0.0f, 0.0f);
     v[6] = TVertex(-1.0f*scale,  1.0f*scale,  1.0f*scale, 1.0f, 0.0f);
     v[7] = TVertex(-1.0f*scale, -1.0f*scale,  1.0f*scale, 1.0f, 1.0f);
 
-    // positive y
+    // positive y - top face
     v[8] = TVertex(-1.0f*scale, 1.0f*scale,  1.0f*scale, 0.0f, 1.0f);
     v[9] = TVertex(-1.0f*scale, 1.0f*scale, -1.0f*scale, 0.0f, 0.0f);
     v[10] = TVertex(1.0f*scale, 1.0f*scale, -1.0f*scale, 1.0f, 0.0f);
     v[11] = TVertex(1.0f*scale, 1.0f*scale,  1.0f*scale, 1.0f, 1.0f);
 
-    // positive z
-    v[12] = TVertex(-1.0f*scale, -1.0f*scale, 1.0f*scale, 0.0f, 1.0f);
-    v[13] = TVertex(-1.0f*scale,  1.0f*scale, 1.0f*scale, 0.0f, 0.0f);
-    v[14] = TVertex( 1.0f*scale,  1.0f*scale, 1.0f*scale, 1.0f, 0.0f);
-    v[15] = TVertex( 1.0f*scale, -1.0f*scale, 1.0f*scale, 1.0f, 1.0f);
+    // negative y - bottom face
+    v[12] = TVertex(-1.0f*scale, -1.0f*scale, -1.0f*scale, 0.0f, 1.0f);
+    v[13] = TVertex(-1.0f*scale, -1.0f*scale,  1.0f*scale, 0.0f, 0.0f);
+    v[14] = TVertex( 1.0f*scale, -1.0f*scale,  1.0f*scale, 1.0f, 0.0f);
+    v[15] = TVertex( 1.0f*scale, -1.0f*scale, -1.0f*scale, 1.0f, 1.0f);
 
-    // negative z
-    v[16] = TVertex( 1.0f*scale, -1.0f*scale, -1.0f*scale, 0.0f, 1.0f);
-    v[17] = TVertex( 1.0f*scale,  1.0f*scale, -1.0f*scale, 0.0f, 0.0f);
-    v[18] = TVertex(-1.0f*scale,  1.0f*scale, -1.0f*scale, 1.0f, 0.0f);
-    v[19] = TVertex(-1.0f*scale, -1.0f*scale, -1.0f*scale, 1.0f, 1.0f);
+    // positive z - left face
+    v[16] = TVertex(-1.0f*scale, -1.0f*scale, 1.0f*scale, 0.0f, 1.0f);
+    v[17] = TVertex(-1.0f*scale,  1.0f*scale, 1.0f*scale, 0.0f, 0.0f);
+    v[18] = TVertex( 1.0f*scale,  1.0f*scale, 1.0f*scale, 1.0f, 0.0f);
+    v[19] = TVertex( 1.0f*scale, -1.0f*scale, 1.0f*scale, 1.0f, 1.0f);
+
+    // negative z - right face
+    v[20] = TVertex( 1.0f*scale, -1.0f*scale, -1.0f*scale, 0.0f, 1.0f);
+    v[21] = TVertex( 1.0f*scale,  1.0f*scale, -1.0f*scale, 0.0f, 0.0f);
+    v[22] = TVertex(-1.0f*scale,  1.0f*scale, -1.0f*scale, 1.0f, 0.0f);
+    v[23] = TVertex(-1.0f*scale, -1.0f*scale, -1.0f*scale, 1.0f, 1.0f);
 
     _vb->Unlock();
 
     // create index
     if (FAILED(_device->CreateIndexBuffer(
-        30 * sizeof(uint16_t),
+        36 * sizeof(uint16_t),
         D3DUSAGE_WRITEONLY,
         D3DFMT_INDEX16,
         D3DPOOL_MANAGED,
@@ -79,28 +85,32 @@ bool SkyBox::InitSkyBox(int scale)
         return false;
     }
 
-    uint16_t* indices = 0;
-    _ib->Lock(0, 0, (void**)&indices, 0);
+    uint16_t* i = 0;
+    _ib->Lock(0, 0, (void**)&i, 0);
 
-    // positive x
-    indices[0] = 0;	indices[1] = 1;	indices[2] = 2;
-    indices[3] = 0;	indices[4] = 2;	indices[5] = 3;
+    // positive x - front face
+    i[0] = 0;  i[1] = 1;   i[2] = 2;
+    i[3] = 0;  i[4] = 2;   i[5] = 3;
 
-    // negative x
-    indices[6] = 4;  indices[7] = 5;  indices[8] = 6;
-    indices[9] = 4;  indices[10] = 6;  indices[11] = 7;
+    // negative x - back face
+    i[6] = 4;  i[7] = 5;   i[8] = 6;
+    i[9] = 4;  i[10] = 6;  i[11] = 7;
 
-    // positive y
-    indices[12] = 8;  indices[13] = 9;  indices[14] = 10;
-    indices[15] = 8;  indices[16] = 10; indices[17] = 11;
+    // positive y - top face
+    i[12] = 8;  i[13] = 9;  i[14] = 10;
+    i[15] = 8;  i[16] = 10; i[17] = 11;
 
-    // positive z
-    indices[18] = 12; indices[19] = 13; indices[20] = 14;
-    indices[21] = 12; indices[22] = 14; indices[23] = 15;
+    // negative y - bottom face
+    i[18] = 12; i[19] = 13; i[20] = 14;
+    i[21] = 12; i[22] = 14; i[23] = 15;
 
-    // negative z
-    indices[24] = 16; indices[25] = 17; indices[26] = 18;
-    indices[27] = 16; indices[28] = 18; indices[29] = 19;
+    // positive z - left face
+    i[24] = 16; i[25] = 17; i[26] = 18;
+    i[27] = 16; i[28] = 18; i[29] = 19;
+
+    // negative z - right face
+    i[30] = 20; i[31] = 21; i[32] = 22;
+    i[33] = 20; i[34] = 22; i[35] = 23;
 
     _ib->Unlock();
 
@@ -140,8 +150,8 @@ void SkyBox::Render()
     _device->SetFVF(FVF_TVERTEX);
     _device->SetIndices(_ib); // set index cache
 
-    // order is: Right->Left->Up->Front->Back
-    for (int i = 0; i < 5; ++i)
+    // order is: Right->Left->Up->Down->Front->Back
+    for (int i = 0; i < 6; ++i)
     {
         _device->SetTexture(0, _texture[i]);
         _device->DrawIndexedPrimitive(

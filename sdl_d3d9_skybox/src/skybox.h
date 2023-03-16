@@ -22,6 +22,6 @@ private:
     IDirect3DDevice9*       _device;
     IDirect3DVertexBuffer9* _vb;
     IDirect3DIndexBuffer9*  _ib;
-    IDirect3DTexture9*      _texture[5]; // ground not included
+    IDirect3DTexture9*      _texture[6];
 };
 #endif __skyboxH__
