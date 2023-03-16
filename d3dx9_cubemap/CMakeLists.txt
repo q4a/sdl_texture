@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.18)
-project(sdl_cubemap)
+project(d3dx9_cubemap)
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/utils.cmake)
 
