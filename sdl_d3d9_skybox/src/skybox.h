@@ -7,7 +7,7 @@
 
 #include <d3d9.h>
 
-#define UseCubeTexture
+//#undef UseCubeTexture
 
 class SkyBox
 {

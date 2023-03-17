@@ -1,8 +1,8 @@
 
 #include "skybox.h"
+#include "d3d_utility.h"
 #include "vertex.h"
 
-#include <d3dx9.h>
 #include <SDL2/SDL.h>
 
 SkyBox::SkyBox(IDirect3DDevice9* device)
@@ -185,7 +185,7 @@ bool SkyBox::SetTexture(const char* TextureFile, int flag)
         TextureFile,
         &_cubetexture)))
 #else
-    if (FAILED(D3DXCreateTextureFromFile(
+	if (FAILED(d3d::CreateTextureFromFile(
         _device,
         TextureFile,
         &_texture[flag])))

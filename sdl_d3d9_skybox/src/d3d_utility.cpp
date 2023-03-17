@@ -1,18 +1,19 @@
-//////////////////////////////////////////////////////////////////////////////////////////////////
-//
-// File: d3dUtility.cpp
-//
-// Author: Frank Luna (C) All Rights Reserved
-//
-// System: AMD Athlon 1800+ XP, 512 DDR, Geforce 3, Windows XP, MSVC++ 7.0
-//
-// Desc: Provides utility functions for simplifying common tasks.
-//
-//////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "d3d_utility.h"
 
 #include <SDL2/SDL_syswm.h>
+
+#ifdef _WIN32
+#include <d3dx9.h>
+#else
+#include <unordered_map>
+#include <gli/gli.hpp>
+
+const std::unordered_map<gli::format, D3DFORMAT> gli_format_map{
+	{ gli::FORMAT_RGBA_DXT5_UNORM_BLOCK16, D3DFMT_DXT5 },
+	{ gli::FORMAT_RGBA_DXT5_SRGB_BLOCK16, D3DFMT_DXT5 },
+};
+#endif
 
 void* d3d::OSHandle(SDL_Window* Window)
 {
@@ -115,6 +116,41 @@ bool d3d::InitD3D(
 	d3d9->Release(); // done with d3d9 object
 
 	return true;
+}
+
+HRESULT d3d::CreateTextureFromFile(
+	IDirect3DDevice9 *device,
+	const char *srcfile,
+	IDirect3DTexture9 **texture)
+{
+#ifdef _WIN32
+	return D3DXCreateTextureFromFile(device, srcfile, texture);
+#else
+
+	gli::texture tex = gli::load(srcfile);
+	const auto dimensions = tex.extent();
+	HRESULT hr;
+
+	hr = device->CreateTexture(dimensions.x, dimensions.y, 1, 0, gli_format_map.at(tex.format()), D3DPOOL_MANAGED, texture, nullptr);
+	if (FAILED(hr))
+	{
+		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "LockRect failed", nullptr);
+		return hr;
+	}
+
+	D3DLOCKED_RECT rect;
+	hr = (*texture)->LockRect( 0, &rect, 0, D3DLOCK_DISCARD );
+	if (FAILED(hr))
+	{
+		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "LockRect failed", nullptr);
+		return hr;
+	}
+	char* dest = static_cast<char*>(rect.pBits);
+	memcpy(dest, tex.data(), tex.size());
+	hr = (*texture)->UnlockRect(0);
+
+	return hr;
+#endif
 }
 
 D3DMATERIAL9 d3d::InitMtrl(D3DCOLORVALUE a, D3DCOLORVALUE d, D3DCOLORVALUE s, D3DCOLORVALUE e, float p)

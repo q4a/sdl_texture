@@ -53,20 +53,10 @@ D3DMATRIX* MatrixPerspectiveFovLH(D3DMATRIX* pout, float fovy, float aspect, flo
 	return pout;
 }
 
-// Some d3dx9 functions
-
 #ifdef _WIN32
 #include <d3dx9.h>
 #define FLT_PI D3DX_PI
 #else
-#include <unordered_map>
-#include <gli/gli.hpp>
-
-const std::unordered_map<gli::format, D3DFORMAT> gli_format_map{
-	{ gli::FORMAT_RGBA_DXT5_UNORM_BLOCK16, D3DFMT_DXT5 },
-	{ gli::FORMAT_RGBA_DXT5_SRGB_BLOCK16, D3DFMT_DXT5 },
-};
-
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #define FLT_PI glm::pi<float>()
@@ -86,41 +76,6 @@ inline D3DMATRIX Matrix4GlmToD3d(const glm::mat4& mat)
 // camera
 static float cameraAngle  = (3.0f * FLT_PI) / 2.0f;
 static float cameraHeight = 2.0f;
-
-HRESULT CreateTextureFromFile(
-	IDirect3DDevice9 *device,
-	const char *srcfile,
-	IDirect3DTexture9 **texture)
-{
-#ifdef _WIN32
-	return D3DXCreateTextureFromFile(device, srcfile, texture);
-#else
-
-	gli::texture tex = gli::load(srcfile);
-	const auto dimensions = tex.extent();
-	HRESULT hr;
-
-	hr = Device->CreateTexture(dimensions.x, dimensions.y, 1, 0, gli_format_map.at(tex.format()), D3DPOOL_MANAGED, texture, nullptr);
-	if (FAILED(hr))
-	{
-		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "LockRect failed", nullptr);
-		return hr;
-	}
-
-	D3DLOCKED_RECT rect;
-	hr = (*texture)->LockRect( 0, &rect, 0, D3DLOCK_DISCARD );
-	if (FAILED(hr))
-	{
-		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "LockRect failed", nullptr);
-		return hr;
-	}
-	char* dest = static_cast<char*>(rect.pBits);
-	memcpy(dest, tex.data(), tex.size());
-	hr = (*texture)->UnlockRect(0);
-
-	return hr;
-#endif
-}
 
 // Framework Functions
 
@@ -176,7 +131,7 @@ bool Setup()
 
 	// Create texture.
 
-	CreateTextureFromFile(
+	d3d::CreateTextureFromFile(
 		Device,
 		"textures/cursor.dds",
 		&Tex);

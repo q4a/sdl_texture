@@ -1,14 +1,3 @@
-//////////////////////////////////////////////////////////////////////////////////////////////////
-//
-// File: d3dUtility.h
-//
-// Author: Frank Luna (C) All Rights Reserved
-//
-// System: AMD Athlon 1800+ XP, 512 DDR, Geforce 3, Windows XP, MSVC++ 7.0
-//
-// Desc: Provides utility functions for simplifying common tasks.
-//
-//////////////////////////////////////////////////////////////////////////////////////////////////
 
 #ifndef __d3d_utility__
 #define __d3d_utility__
@@ -26,6 +15,11 @@ namespace d3d
 		bool windowed,             // [in] Windowed (true)or full screen (false).
 		D3DDEVTYPE deviceType,     // [in] HAL or REF
 		IDirect3DDevice9** device);// [out]The created device.
+
+	HRESULT CreateTextureFromFile(
+		IDirect3DDevice9 *device,
+		const char *srcfile,
+		IDirect3DTexture9 **texture);
 
 	template<class T> void Release(T t)
 	{
