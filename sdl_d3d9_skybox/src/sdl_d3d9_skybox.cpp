@@ -91,12 +91,12 @@ bool CreateSkyBox()
 #ifdef UseCubeTexture
 		Sky->SetTexture("textures/earth-cubemap.dds", 0);
 #else
-		Sky->SetTexture("textures/skybox/right.jpg",  0);
-		Sky->SetTexture("textures/skybox/left.jpg",   1);
-		Sky->SetTexture("textures/skybox/top.jpg",    2);
-		Sky->SetTexture("textures/skybox/bottom.jpg", 3);
-		Sky->SetTexture("textures/skybox/front.jpg",  4);
-		Sky->SetTexture("textures/skybox/back.jpg",   5);
+		Sky->SetTexture("textures/skybox-dds/right.dds",  0);
+		Sky->SetTexture("textures/skybox-dds/left.dds",   1);
+		Sky->SetTexture("textures/skybox-dds/top.dds",    2);
+		Sky->SetTexture("textures/skybox-dds/bottom.dds", 3);
+		Sky->SetTexture("textures/skybox-dds/front.dds",  4);
+		Sky->SetTexture("textures/skybox-dds/back.dds",   5);
 #endif
 
 		return true;
@@ -235,7 +235,7 @@ int main(int argc, char* argv[]) {
 	initSDL();
 
 	//Creating the context for SDL2.
-	SDL_Window* Window = createWindowContext("Hello Texture!");
+	SDL_Window* Window = createWindowContext("Hello skybox!");
 
 	if (!d3d::InitD3D(Window,
 		Width, Height, true, D3DDEVTYPE_HAL, &Device))
