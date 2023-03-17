@@ -8,8 +8,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        configuration: [msvc-debug]
+        cube: [ON, OFF]
         folder: [sdl_d3d9_texture, sdl_d3d9_cube, sdl_d3d9_skybox]
+        configuration: [msvc-debug]
     steps:
     - uses: actions/checkout@v3
       with:
@@ -24,6 +25,7 @@ jobs:
         cmakeSettingsJsonPath: '${{ github.workspace }}/${{ matrix.folder }}/CMakeSettings.json'
         useVcpkgToolchainFile: false
         buildDirectory: '${{ github.workspace }}/build'
+        cmakeAppendedArgs: '-DUSE_CUBE=${{ matrix.cube }}'
         configurationRegexFilter: '${{ matrix.configuration }}'
     - name: Check file
       run: |

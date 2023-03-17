@@ -9,6 +9,7 @@ jobs:
       fail-fast: false
       matrix:
         nine: [ON, OFF]
+        cube: [ON, OFF]
         folder: [sdl_d3d9_texture, sdl_d3d9_cube]
         configuration: [Debug]
 
@@ -28,7 +29,7 @@ jobs:
       run: |
         export CC=gcc && export CXX=g++
         mkdir ${{ matrix.folder }}/build && cd ${{ matrix.folder }}/build
-        cmake .. -G Ninja -DUSE_NINE=${{ matrix.nine }} -DCMAKE_BUILD_TYPE=${{ matrix.configuration }}
+        cmake .. -G Ninja -DUSE_NINE=${{ matrix.nine }} -DUSE_CUBE=${{ matrix.cube }} -DCMAKE_BUILD_TYPE=${{ matrix.configuration }}
     - name: Build and check file
       working-directory: ${{ matrix.folder }}/build
       run: |
