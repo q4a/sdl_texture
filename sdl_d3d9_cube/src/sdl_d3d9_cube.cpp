@@ -65,6 +65,7 @@ D3DMATRIX* MatrixPerspectiveFovLH(D3DMATRIX* pout, float fovy, float aspect, flo
 #include <gli/gli.hpp>
 
 const std::unordered_map<gli::format, D3DFORMAT> gli_format_map{
+	{ gli::FORMAT_RGBA_DXT1_UNORM_BLOCK8, D3DFMT_DXT1 },
 	{ gli::FORMAT_RGBA_DXT5_UNORM_BLOCK16, D3DFMT_DXT5 },
 	{ gli::FORMAT_RGBA_DXT5_SRGB_BLOCK16, D3DFMT_DXT5 },
 };
@@ -124,6 +125,48 @@ HRESULT CreateTextureFromFile(
 #endif
 }
 
+HRESULT CreateCubeTextureFromFile(
+	IDirect3DDevice9 *device,
+	const char *srcfile,
+	IDirect3DCubeTexture9 **texture)
+{
+#ifdef _WIN32
+	return D3DXCreateCubeTextureFromFile(device, srcfile, texture);
+#else
+
+	gli::texture_cube tex = gli::texture_cube(gli::load(srcfile));
+	const auto dimensions = tex.extent();
+	HRESULT hr;
+
+	hr = Device->CreateCubeTexture(dimensions.x, 1, 0, gli_format_map.at(tex.format()), D3DPOOL_MANAGED, texture, nullptr);
+	if (FAILED(hr))
+	{
+		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "LockRect failed", nullptr);
+		return hr;
+	}
+
+	D3DLOCKED_RECT rect;
+	char* dest;
+	auto maxface = tex.max_face();
+	for (int i = 0; i <= maxface; ++i)
+	{
+		hr = (*texture)->LockRect( (D3DCUBEMAP_FACES)i, 0, &rect, 0, D3DLOCK_DISCARD );
+		if (FAILED(hr))
+		{
+			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "LockRect failed", nullptr);
+			return hr;
+		}
+		dest = static_cast<char*>(rect.pBits);
+		memcpy(dest, tex[i].data(), tex[i].size());
+		hr = (*texture)->UnlockRect( (D3DCUBEMAP_FACES)i, 0 );
+		if (FAILED(hr))
+			break;
+	}
+
+	return hr;
+#endif
+}
+
 // Framework Functions
 
 bool Setup()
@@ -150,7 +193,7 @@ bool Setup()
 	// Create texture.
 
 #ifdef UseCubeTexture
-	D3DXCreateCubeTextureFromFile(
+	CreateCubeTextureFromFile(
 		Device,
 		"textures/earth-cubemap.dds",
 		&Tex);

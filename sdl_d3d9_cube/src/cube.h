@@ -16,7 +16,7 @@
 #include <d3d9.h>
 #include <string>
 
-#define UseCubeTexture
+//#undef UseCubeTexture
 
 class Cube
 {
