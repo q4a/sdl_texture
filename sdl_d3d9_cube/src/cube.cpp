@@ -18,6 +18,56 @@ Cube::Cube(IDirect3DDevice9* device)
 	// save a ptr to the device
 	_device = device;
 
+#ifdef UseCubeTexture
+	_device->CreateVertexBuffer(
+		24 * sizeof(VertexCube),
+		D3DUSAGE_WRITEONLY,
+		FVF_VERTEXCUBE,
+		D3DPOOL_MANAGED,
+		&_vb,
+		0);
+
+	VertexCube* v;
+	_vb->Lock(0, 0, (void**)&v, 0);
+
+	// fill in the front face vertex data
+	v[0] = VertexCube(-1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f);
+	v[1] = VertexCube(-1.0f,  1.0f, -1.0f, -1.0f,  1.0f, -1.0f);
+	v[2] = VertexCube( 1.0f,  1.0f, -1.0f,  1.0f,  1.0f, -1.0f);
+	v[3] = VertexCube( 1.0f, -1.0f, -1.0f,  1.0f, -1.0f, -1.0f);
+
+	// fill in the back face vertex data
+	v[4] = VertexCube(-1.0f, -1.0f, 1.0f, -1.0f, -1.0f, 1.0f);
+	v[5] = VertexCube( 1.0f, -1.0f, 1.0f,  1.0f, -1.0f, 1.0f);
+	v[6] = VertexCube( 1.0f,  1.0f, 1.0f,  1.0f,  1.0f, 1.0f);
+	v[7] = VertexCube(-1.0f,  1.0f, 1.0f, -1.0f,  1.0f, 1.0f);
+
+	// fill in the top face vertex data
+	v[8] = VertexCube(-1.0f, 1.0f, -1.0f, -1.0f, 1.0f, -1.0f);
+	v[9] = VertexCube(-1.0f, 1.0f,  1.0f, -1.0f, 1.0f,  1.0f);
+	v[10] = VertexCube(1.0f, 1.0f,  1.0f,  1.0f, 1.0f,  1.0f);
+	v[11] = VertexCube(1.0f, 1.0f, -1.0f,  1.0f, 1.0f, -1.0f);
+
+	// fill in the bottom face vertex data
+	v[12] = VertexCube(-1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f);
+	v[13] = VertexCube( 1.0f, -1.0f, -1.0f,  1.0f, -1.0f, -1.0f);
+	v[14] = VertexCube( 1.0f, -1.0f,  1.0f,  1.0f, -1.0f,  1.0f);
+	v[15] = VertexCube(-1.0f, -1.0f,  1.0f, -1.0f, -1.0f,  1.0f);
+
+	// fill in the left face vertex data
+	v[16] = VertexCube(-1.0f, -1.0f,  1.0f, -1.0f, -1.0f,  1.0f);
+	v[17] = VertexCube(-1.0f,  1.0f,  1.0f, -1.0f,  1.0f,  1.0f);
+	v[18] = VertexCube(-1.0f,  1.0f, -1.0f, -1.0f,  1.0f, -1.0f);
+	v[19] = VertexCube(-1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f);
+
+	// fill in the right face vertex data
+	v[20] = VertexCube(1.0f, -1.0f, -1.0f, 1.0f, -1.0f, -1.0f);
+	v[21] = VertexCube(1.0f,  1.0f, -1.0f, 1.0f,  1.0f, -1.0f);
+	v[22] = VertexCube(1.0f,  1.0f,  1.0f, 1.0f,  1.0f,  1.0f);
+	v[23] = VertexCube(1.0f, -1.0f,  1.0f, 1.0f, -1.0f,  1.0f);
+
+	_vb->Unlock();
+#else
 	_device->CreateVertexBuffer(
 		24 * sizeof(Vertex),
 		D3DUSAGE_WRITEONLY,
@@ -68,16 +118,17 @@ Cube::Cube(IDirect3DDevice9* device)
 	v[23] = Vertex( 1.0f, -1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f);
 
 	_vb->Unlock();
+#endif
 
 	_device->CreateIndexBuffer(
-		36 * sizeof(WORD),
+		36 * sizeof(uint16_t),
 		D3DUSAGE_WRITEONLY,
 		D3DFMT_INDEX16,
 		D3DPOOL_MANAGED,
 		&_ib,
 		0);
 
-	WORD* i = 0;
+	uint16_t* i = 0;
 	_ib->Lock(0, 0, (void**)&i, 0);
 
 	// fill in the front face index data
@@ -122,9 +173,14 @@ bool Cube::draw(D3DMATRIX* world, D3DMATERIAL9* mtrl, IDirect3DTexture9* tex)
 	if( tex )
 		_device->SetTexture(0, tex);
 
-	_device->SetStreamSource(0, _vb, 0, sizeof(Vertex));
-	_device->SetIndices(_ib);
+#ifdef UseCubeTexture
+	_device->SetFVF(FVF_VERTEXCUBE);
+	_device->SetStreamSource(0, _vb, 0, sizeof(VertexCube));
+#else
 	_device->SetFVF(FVF_VERTEX);
+	_device->SetStreamSource(0, _vb, 0, sizeof(Vertex));
+#endif
+	_device->SetIndices(_ib);
 	_device->DrawIndexedPrimitive(
 		D3DPT_TRIANGLELIST,
 		0,

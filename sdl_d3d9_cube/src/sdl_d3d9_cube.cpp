@@ -12,8 +12,12 @@ IDirect3DDevice9* Device = 0;
 const int Width = 640;
 const int Height = 480;
 
-Cube*              Box = 0;
-IDirect3DTexture9* Tex = 0;
+Cube*                  Box = 0;
+#ifdef UseCubeTexture
+IDirect3DCubeTexture9* Tex = 0;
+#else
+IDirect3DTexture9*     Tex = 0;
+#endif
 
 // Additional math functions
 
@@ -145,10 +149,17 @@ bool Setup()
 
 	// Create texture.
 
+#ifdef UseCubeTexture
+	D3DXCreateCubeTextureFromFile(
+		Device,
+		"textures/earth-cubemap.dds",
+		&Tex);
+#else
 	CreateTextureFromFile(
 		Device,
 		"textures/cursor.dds",
 		&Tex);
+#endif
 
 	// Set Texture Filter States.
 
@@ -173,7 +184,11 @@ bool Setup()
 void Cleanup()
 {
 	d3d::Delete<Cube*>(Box);
+#ifdef UseCubeTexture
+	d3d::Release<IDirect3DCubeTexture9*>(Tex);
+#else
 	d3d::Release<IDirect3DTexture9*>(Tex);
+#endif
 }
 
 void ShowPrimitive()

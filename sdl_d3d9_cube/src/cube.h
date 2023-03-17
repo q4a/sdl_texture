@@ -16,6 +16,8 @@
 #include <d3d9.h>
 #include <string>
 
+#define UseCubeTexture
+
 class Cube
 {
 public:
