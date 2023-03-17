@@ -2,6 +2,7 @@
 #include "skybox.h"
 #include "vertex.h"
 
+#include <d3dx9.h>
 #include <SDL2/SDL.h>
 
 SkyBox::SkyBox(IDirect3DDevice9* device)
@@ -9,7 +10,11 @@ SkyBox::SkyBox(IDirect3DDevice9* device)
     _device = device;
     _vb = nullptr;
     _ib = nullptr;
+#ifdef UseCubeTexture
+    _cubetexture = nullptr;
+#else
     memset(_texture, 0, sizeof(_texture));
+#endif
 }
 
 SkyBox::~SkyBox()
@@ -20,6 +25,60 @@ SkyBox::~SkyBox()
 
 bool SkyBox::InitSkyBox(int scale)
 {
+#ifdef UseCubeTexture
+    // create vertex coordinates
+    if (FAILED(_device->CreateVertexBuffer(
+        24 * sizeof(VertexCube),
+        D3DUSAGE_WRITEONLY,
+        FVF_VERTEXCUBE,
+        D3DPOOL_MANAGED,
+        &_vb,
+        0)))
+    {
+        return false;
+    }
+
+    VertexCube* v = 0;
+    _vb->Lock(0, 0, (void**)&v, 0);
+
+    // positive x - front face
+    v[0] = VertexCube(1.0f*scale, -1.0f*scale,  1.0f*scale, 1.0f, -1.0f,  1.0f);
+    v[1] = VertexCube(1.0f*scale,  1.0f*scale,  1.0f*scale, 1.0f,  1.0f,  1.0f);
+    v[2] = VertexCube(1.0f*scale,  1.0f*scale, -1.0f*scale, 1.0f,  1.0f, -1.0f);
+    v[3] = VertexCube(1.0f*scale, -1.0f*scale, -1.0f*scale, 1.0f, -1.0f, -1.0f);
+
+    // negative x - back face
+    v[4] = VertexCube(-1.0f*scale, -1.0f*scale, -1.0f*scale, -1.0f, -1.0f, -1.0f);
+    v[5] = VertexCube(-1.0f*scale,  1.0f*scale, -1.0f*scale, -1.0f,  1.0f, -1.0f);
+    v[6] = VertexCube(-1.0f*scale,  1.0f*scale,  1.0f*scale, -1.0f,  1.0f,  1.0f);
+    v[7] = VertexCube(-1.0f*scale, -1.0f*scale,  1.0f*scale, -1.0f, -1.0f,  1.0f);
+
+    // positive y - top face
+    v[8] = VertexCube(-1.0f*scale, 1.0f*scale,  1.0f*scale, -1.0f, 1.0f,  1.0f);
+    v[9] = VertexCube(-1.0f*scale, 1.0f*scale, -1.0f*scale, -1.0f, 1.0f, -1.0f);
+    v[10] = VertexCube(1.0f*scale, 1.0f*scale, -1.0f*scale,  1.0f, 1.0f, -1.0f);
+    v[11] = VertexCube(1.0f*scale, 1.0f*scale,  1.0f*scale,  1.0f, 1.0f,  1.0f);
+
+    // negative y - bottom face
+    v[12] = VertexCube(-1.0f*scale, -1.0f*scale, -1.0f*scale, -1.0f, -1.0f, -1.0f);
+    v[13] = VertexCube(-1.0f*scale, -1.0f*scale,  1.0f*scale, -1.0f, -1.0f,  1.0f);
+    v[14] = VertexCube( 1.0f*scale, -1.0f*scale,  1.0f*scale,  1.0f, -1.0f,  1.0f);
+    v[15] = VertexCube( 1.0f*scale, -1.0f*scale, -1.0f*scale,  1.0f, -1.0f, -1.0f);
+
+    // positive z - left face
+    v[16] = VertexCube(-1.0f*scale, -1.0f*scale, 1.0f*scale, -1.0f, -1.0f, 1.0f);
+    v[17] = VertexCube(-1.0f*scale,  1.0f*scale, 1.0f*scale, -1.0f,  1.0f, 1.0f);
+    v[18] = VertexCube( 1.0f*scale,  1.0f*scale, 1.0f*scale,  1.0f,  1.0f, 1.0f);
+    v[19] = VertexCube( 1.0f*scale, -1.0f*scale, 1.0f*scale,  1.0f, -1.0f, 1.0f);
+
+    // negative z - right face
+    v[20] = VertexCube( 1.0f*scale, -1.0f*scale, -1.0f*scale,  1.0f, -1.0f, -1.0f);
+    v[21] = VertexCube( 1.0f*scale,  1.0f*scale, -1.0f*scale,  1.0f,  1.0f, -1.0f);
+    v[22] = VertexCube(-1.0f*scale,  1.0f*scale, -1.0f*scale, -1.0f,  1.0f, -1.0f);
+    v[23] = VertexCube(-1.0f*scale, -1.0f*scale, -1.0f*scale, -1.0f, -1.0f, -1.0f);
+
+    _vb->Unlock();
+#else
     // create vertex coordinates
     if (FAILED(_device->CreateVertexBuffer(
         24 * sizeof(TVertex),
@@ -72,6 +131,7 @@ bool SkyBox::InitSkyBox(int scale)
     v[23] = TVertex(-1.0f*scale, -1.0f*scale, -1.0f*scale, 1.0f, 1.0f);
 
     _vb->Unlock();
+#endif
 
     // create index
     if (FAILED(_device->CreateIndexBuffer(
@@ -119,12 +179,19 @@ bool SkyBox::InitSkyBox(int scale)
 
 bool SkyBox::SetTexture(const char* TextureFile, int flag)
 {
+#ifdef UseCubeTexture
+    if (FAILED(D3DXCreateCubeTextureFromFile(
+        _device,
+        TextureFile,
+        &_cubetexture)))
+#else
     if (FAILED(D3DXCreateTextureFromFile(
         _device,
         TextureFile,
         &_texture[flag])))
+#endif
     {
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "D3DXCreateTextureFromFile failed", nullptr);
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "SkyBox::SetTexture failed", nullptr);
         return false;
     }
     return true;
@@ -146,10 +213,21 @@ void SkyBox::Render()
     _device->GetRenderState(D3DRS_LIGHTING, &lightState);
     _device->SetRenderState(D3DRS_LIGHTING, false);*/
 
+    _device->SetIndices(_ib);
+#ifdef UseCubeTexture
+    _device->SetStreamSource(0, _vb, 0, sizeof(VertexCube));
+    _device->SetFVF(FVF_VERTEXCUBE);
+    _device->SetTexture(0, _cubetexture);
+    _device->DrawIndexedPrimitive(
+        D3DPT_TRIANGLELIST,
+        0,
+        0,
+        24,
+        0,
+        12);
+#else
     _device->SetStreamSource(0, _vb, 0, sizeof(TVertex));
     _device->SetFVF(FVF_TVERTEX);
-    _device->SetIndices(_ib); // set index cache
-
     // order is: Right->Left->Up->Down->Front->Back
     for (int i = 0; i < 6; ++i)
     {
@@ -162,6 +240,7 @@ void SkyBox::Render()
             i * 6, // starting from the number element in the index array to draw the primitive
             2);    // number of primitives drawn
     }
+#endif
 
     //_device->SetRenderState(D3DRS_LIGHTING, lightState);
 }

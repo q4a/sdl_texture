@@ -5,7 +5,9 @@
 #ifndef __skyboxH__
 #define __skyboxH__
 
-#include <d3dx9.h>
+#include <d3d9.h>
+
+#define UseCubeTexture
 
 class SkyBox
 {
@@ -22,6 +24,10 @@ private:
     IDirect3DDevice9*       _device;
     IDirect3DVertexBuffer9* _vb;
     IDirect3DIndexBuffer9*  _ib;
+#ifdef UseCubeTexture
+    IDirect3DCubeTexture9* _cubetexture;
+#else
     IDirect3DTexture9*      _texture[6];
+#endif
 };
 #endif __skyboxH__

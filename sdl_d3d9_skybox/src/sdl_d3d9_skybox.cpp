@@ -133,13 +133,16 @@ bool CreateSkyBox()
 		{
 			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "SkyBox init failed", nullptr);
 		}
-
+#ifdef UseCubeTexture
+		Sky->SetTexture("textures/earth-cubemap.dds", 0);
+#else
 		Sky->SetTexture("textures/skybox/right.jpg",  0);
 		Sky->SetTexture("textures/skybox/left.jpg",   1);
 		Sky->SetTexture("textures/skybox/top.jpg",    2);
 		Sky->SetTexture("textures/skybox/bottom.jpg", 3);
 		Sky->SetTexture("textures/skybox/front.jpg",  4);
 		Sky->SetTexture("textures/skybox/back.jpg",   5);
+#endif
 
 		return true;
 	}
