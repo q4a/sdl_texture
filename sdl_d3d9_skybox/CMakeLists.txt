@@ -4,6 +4,7 @@ project(sdl_d3d9_skybox)
 include(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/utils.cmake)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../cmake")
 
+option(USE_CUBE "Use CubeTexture (cubemap) instead of six 2D textures" ON)
 if (NOT WIN32)
 option(USE_CONAN "Use Conan build system" OFF)
 option(USE_NINE "Use Gallium Nine for native D3D9 API" OFF)
@@ -37,6 +38,9 @@ endif()
 
 # Source files
 
+if (USE_CUBE)
+    add_definitions(-DUseCubeTexture=1)
+endif()
 if (USE_NINE)
     add_definitions(-DUSE_NINE=1)
 endif()
