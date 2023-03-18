@@ -180,12 +180,12 @@ bool SkyBox::InitSkyBox(int scale)
 bool SkyBox::SetTexture(const char* TextureFile, int flag)
 {
 #ifdef UseCubeTexture
-    if (FAILED(D3DXCreateCubeTextureFromFile(
+    if (FAILED(d3d::CreateCubeTextureFromFile(
         _device,
         TextureFile,
         &_cubetexture)))
 #else
-	if (FAILED(d3d::CreateTextureFromFile(
+    if (FAILED(d3d::CreateTextureFromFile(
         _device,
         TextureFile,
         &_texture[flag])))

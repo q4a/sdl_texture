@@ -21,6 +21,11 @@ namespace d3d
 		const char *srcfile,
 		IDirect3DTexture9 **texture);
 
+	HRESULT CreateCubeTextureFromFile(
+		IDirect3DDevice9 *device,
+		const char *srcfile,
+		IDirect3DCubeTexture9 **texture);
+
 	template<class T> void Release(T t)
 	{
 		if( t )
