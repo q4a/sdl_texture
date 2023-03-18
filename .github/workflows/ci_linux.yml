@@ -10,7 +10,7 @@ jobs:
       matrix:
         nine: [ON, OFF]
         cube: [ON, OFF]
-        folder: [sdl_d3d9_texture, sdl_d3d9_cube]
+        folder: [sdl_d3d9_texture, sdl_d3d9_cube, sdl_d3d9_skybox]
         configuration: [Debug]
 
     steps:
