@@ -59,7 +59,6 @@ D3DMATRIX* MatrixPerspectiveFovLH(D3DMATRIX* pout, float fovy, float aspect, flo
 
 #ifdef _WIN32
 #include <d3dx9.h>
-#define FLT_PI D3DX_PI
 #else
 #include <unordered_map>
 #include <gli/gli.hpp>
@@ -72,7 +71,6 @@ const std::unordered_map<gli::format, D3DFORMAT> gli_format_map{
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#define FLT_PI glm::pi<float>()
 
 inline D3DMATRIX Matrix4GlmToD3d(const glm::mat4& mat)
 {
@@ -87,7 +85,7 @@ inline D3DMATRIX Matrix4GlmToD3d(const glm::mat4& mat)
 #endif
 
 // camera
-static float cameraAngle  = (3.0f * FLT_PI) / 2.0f;
+static float cameraAngle  = (3.0f * M_PI) / 2.0f;
 static float cameraHeight = 2.0f;
 
 HRESULT CreateTextureFromFile(
