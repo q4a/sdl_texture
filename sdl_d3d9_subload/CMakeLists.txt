@@ -57,6 +57,7 @@ add_executable(${PROJECT_NAME} WIN32 ${${PROJECT_NAME}_SOURCE} ${${PROJECT_NAME}
 if (WIN32)
     message("Using Windows D3D9 API")
     set(NATIVE_D3D9_LIBS "CONAN_PKG::directx")
+#    target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/../../glm")
 else()
 
     include(ExternalProject)
@@ -75,7 +76,7 @@ else()
          "${SOURCE_DIR}"
     )
     add_dependencies(${PROJECT_NAME} gli)
-
+#else()
     if (USE_NINE) # for Gallium Nine
         message("Using Gallium Nine for native D3D9 API")
 

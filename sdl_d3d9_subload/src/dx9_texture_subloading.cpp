@@ -4,9 +4,104 @@
 
 #include <string>
 
-#include <d3dx9.h>
+#include <d3d9.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_syswm.h>
+
+#ifdef _WIN32
+#define UseD3DX9
+#endif
+
+#ifdef UseD3DX9
+#include <d3dx9.h>
+#else
+#include <gli/gli.hpp>
+#endif
+
+// D3DX9 functions
+
+// from wine-8.2
+
+static inline D3DMATRIX* MatrixIdentity(D3DMATRIX* pout)
+{
+    if (!pout) return nullptr;
+    pout->m[0][1] = 0.0f;
+    pout->m[0][2] = 0.0f;
+    pout->m[0][3] = 0.0f;
+    pout->m[1][0] = 0.0f;
+    pout->m[1][2] = 0.0f;
+    pout->m[1][3] = 0.0f;
+    pout->m[2][0] = 0.0f;
+    pout->m[2][1] = 0.0f;
+    pout->m[2][3] = 0.0f;
+    pout->m[3][0] = 0.0f;
+    pout->m[3][1] = 0.0f;
+    pout->m[3][2] = 0.0f;
+    pout->m[0][0] = 1.0f;
+    pout->m[1][1] = 1.0f;
+    pout->m[2][2] = 1.0f;
+    pout->m[3][3] = 1.0f;
+    return pout;
+}
+
+D3DMATRIX* MatrixPerspectiveFovLH(D3DMATRIX* pout, float fovy, float aspect, float zn, float zf)
+{
+    MatrixIdentity(pout);
+    pout->m[0][0] = 1.0f / (aspect * tanf(fovy / 2.0f));
+    pout->m[1][1] = 1.0f / tanf(fovy / 2.0f);
+    pout->m[2][2] = zf / (zf - zn);
+    pout->m[2][3] = 1.0f;
+    pout->m[3][2] = (zf * zn) / (zn - zf);
+    pout->m[3][3] = 0.0f;
+    return pout;
+}
+
+D3DMATRIX* MatrixTranslation(D3DMATRIX* pout, float x, float y, float z)
+{
+    MatrixIdentity(pout);
+    pout->m[3][0] = x;
+    pout->m[3][1] = y;
+    pout->m[3][2] = z;
+    return pout;
+}
+
+// custom D3DX9 functions
+
+HRESULT CreateTextureFromFile(
+    IDirect3DDevice9* device,
+    const char* srcfile,
+    IDirect3DTexture9** texture)
+{
+#ifdef UseD3DX9
+    return D3DXCreateTextureFromFile(device, srcfile, texture);
+#else
+
+    gli::texture tex = gli::load(srcfile);
+    const auto dimensions = tex.extent();
+    gli::dx DX;
+    D3DFORMAT fmt = static_cast<D3DFORMAT>(DX.translate(tex.format()).D3DFormat);
+
+    HRESULT hr = device->CreateTexture(dimensions.x, dimensions.y, 1, 0, fmt, D3DPOOL_MANAGED, texture, nullptr);
+    if (FAILED(hr))
+    {
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "LockRect failed", nullptr);
+        return hr;
+    }
+
+    D3DLOCKED_RECT rect;
+    hr = (*texture)->LockRect(0, &rect, 0, D3DLOCK_DISCARD);
+    if (FAILED(hr))
+    {
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "LockRect failed", nullptr);
+        return hr;
+    }
+    char* dest = static_cast<char*>(rect.pBits);
+    memcpy(dest, tex.data(), tex.size());
+    hr = (*texture)->UnlockRect(0);
+
+    return hr;
+#endif
+}
 
 //-----------------------------------------------------------------------------
 // GLOBALS
@@ -44,7 +139,7 @@ bool InitD3D(SDL_Window* Window,
     D3DDEVTYPE deviceType,
     IDirect3DDevice9** device
 );
-bool Setup();
+bool Setup(int Width, int Height);
 void LoadTexture();
 void LoadSubTexture();
 void Cleanup();
@@ -66,7 +161,7 @@ int main(int argc, char* argv[])
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "InitD3D() - FAILED", nullptr);
         return 0;
     }
-    if (!Setup())
+    if (!Setup(Width, Height))
     {
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "Setup() - FAILED", nullptr);
         return 0;
@@ -196,7 +291,7 @@ bool InitD3D(
     return true;
 }
 
-bool Setup()
+bool Setup(int Width, int Height)
 {
    LoadTexture();
 
@@ -209,9 +304,15 @@ bool Setup()
     memcpy(pVertices, g_quadVertices, sizeof(g_quadVertices));
     g_pVertexBuffer->Unlock();
 
+#ifdef UseD3DX9
     D3DXMATRIX matProj;
     D3DXMatrixPerspectiveFovLH(&matProj, D3DXToRadian(45.0f),
-        640.0f / 480.0f, 0.1f, 100.0f);
+        (float)Width / (float)Height, 0.1f, 100.0f);
+#else
+    D3DMATRIX matProj;
+    MatrixPerspectiveFovLH(&matProj, M_PI / 4.0f,
+        (float)Width / (float)Height, 0.1f, 100.0f);
+#endif
     g_pd3dDevice->SetTransform(D3DTS_PROJECTION, &matProj);
 
     g_pd3dDevice->SetRenderState(D3DRS_LIGHTING, FALSE);
@@ -221,7 +322,7 @@ bool Setup()
 
 void LoadTexture()
 {
-    D3DXCreateTextureFromFile(g_pd3dDevice, "textures/chess4.dds", &g_pTexture);
+    CreateTextureFromFile(g_pd3dDevice, "textures/chess4.dds", &g_pTexture);
 
     g_pd3dDevice->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
     g_pd3dDevice->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
@@ -233,7 +334,7 @@ void LoadSubTexture()
     LPDIRECT3DSURFACE9 pDestSurface = nullptr;
     LPDIRECT3DSURFACE9 pSrcSurface  = nullptr;
 
-    D3DXCreateTextureFromFile( g_pd3dDevice, "textures/cursor.dds", &pSubTexture );
+    CreateTextureFromFile(g_pd3dDevice, "textures/cursor.dds", &pSubTexture);
 
     g_pTexture->GetSurfaceLevel( 0, &pDestSurface );
     pSubTexture->GetSurfaceLevel( 0, &pSrcSurface );
@@ -241,9 +342,12 @@ void LoadSubTexture()
     RECT srcRect[]  = {  0,  0, 64, 64 };
     RECT destRect[] = { 32, 32, 96, 96 };
 
+#ifdef UseD3DX9
     D3DXLoadSurfaceFromSurface( pDestSurface, nullptr, destRect,
                                 pSrcSurface,  nullptr, srcRect,
                                 D3DX_DEFAULT, 0);
+#else
+#endif
 
     pSrcSurface->Release();
     pDestSurface->Release();
@@ -267,9 +371,14 @@ void ShowPrimitive()
     g_pd3dDevice->Clear( 0, nullptr, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER,
                          D3DCOLOR_COLORVALUE(0.0f,0.0f,0.0f,1.0f), 1.0f, 0 );
 
+#ifdef UseD3DX9
     D3DXMATRIX matWorld;
     D3DXMatrixTranslation( &matWorld, 0.0f, 0.0f, 4.0f );
-    g_pd3dDevice->SetTransform( D3DTS_WORLD, &matWorld );
+#else
+    D3DMATRIX matWorld;
+    MatrixTranslation(&matWorld, 0.0f, 0.0f, 4.0f);
+#endif
+    g_pd3dDevice->SetTransform(D3DTS_WORLD, &matWorld);
 
     if(g_bAlterTexture == true)
     {
