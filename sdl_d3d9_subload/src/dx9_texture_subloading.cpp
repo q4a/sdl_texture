@@ -1402,9 +1402,131 @@ bool Setup(int Width, int Height)
     return true;
 }
 
-void LoadTexture()
+void LoadTextureV1()
 {
     CreateTextureFromFile(g_pd3dDevice, "textures/chess4.dds", &g_pTexture);
+}
+
+using u32 = std::uint32_t;
+typedef IDirect3DTexture9 ID3DTexture2D;
+
+#define R_CHK(expr)\
+do\
+    {\
+        HRESULT hr = expr;\
+        if (FAILED(hr))\
+            SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "R_CHK - FAILED", nullptr);\
+    } while (false)
+
+#define R_ASSERT(expr)\
+do\
+    {\
+        if (!(expr))\
+            SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "R_CHK - FAILED", nullptr);\
+    } while (false)
+
+void Reduce(int& w, int& h, int& l, int& skip)
+{
+    while ((l > 1) && skip)
+    {
+        w /= 2;
+        h /= 2;
+        l -= 1;
+
+        skip--;
+    }
+    if (w < 1)
+        w = 1;
+    if (h < 1)
+        h = 1;
+}
+
+ID3DTexture2D* TW_LoadTextureFromTexture(
+    ID3DTexture2D* t_from, D3DFORMAT& t_dest_fmt, int levels_2_skip, u32& w, u32& h)
+{
+    // Calculate levels & dimensions
+    ID3DTexture2D* t_dest = nullptr;
+    D3DSURFACE_DESC t_from_desc0;
+    R_CHK(t_from->GetLevelDesc(0, &t_from_desc0));
+    int levels_exist = t_from->GetLevelCount();
+    int top_width = t_from_desc0.Width;
+    int top_height = t_from_desc0.Height;
+    Reduce(top_width, top_height, levels_exist, levels_2_skip);
+
+// Create HW-surface
+    R_ASSERT(t_dest_fmt == t_from_desc0.Format);
+    R_CHK(g_pd3dDevice->CreateTexture(top_width, top_height, levels_exist, 0, t_dest_fmt,
+                                    (1 ? D3DPOOL_DEFAULT : D3DPOOL_MANAGED),
+                                    &t_dest, nullptr));
+
+    // Copy surfaces & destroy temporary
+    ID3DTexture2D* T_src = t_from;
+    ID3DTexture2D* T_dst = t_dest;
+
+    int L_src = T_src->GetLevelCount() - 1;
+    int L_dst = T_dst->GetLevelCount() - 1;
+    for (; L_dst >= 0; L_src--, L_dst--)
+    {
+        // Get surfaces
+        IDirect3DSurface9 *S_src, *S_dst;
+        R_CHK(T_src->GetSurfaceLevel(L_src, &S_src));
+        R_CHK(T_dst->GetSurfaceLevel(L_dst, &S_dst));
+
+        // Copy
+        R_CHK(D3DXLoadSurfaceFromSurface(S_dst, NULL, NULL, S_src, NULL, NULL, D3DX_FILTER_NONE, 0));
+
+        // Release surfaces
+        //_RELEASE(S_src);
+        //_RELEASE(S_dst);
+    }
+
+    // OK
+    w = top_width;
+    h = top_height;
+    return t_dest;
+}
+
+void LoadTextureV2()
+{
+    HRESULT result;
+    gli::texture texture;
+    gli::storage_linear::extent_type dimensions;
+    D3DLOCKED_RECT lockRect;
+    gli::dx DX;
+
+    u32 dwWidth, dwHeight;
+    int img_loaded_lod = 0;
+    D3DFORMAT fmt;
+
+    ID3DTexture2D* T_sysmem;
+
+    texture = gli::load("textures/chess4.dds");
+    dimensions = texture.extent();
+    fmt = static_cast<D3DFORMAT>(DX.translate(texture.format()).D3DFormat);
+    result = g_pd3dDevice->CreateTexture(dimensions.x, dimensions.y, 0, 0, fmt,
+                                       D3DPOOL_SYSTEMMEM, &T_sysmem, nullptr);
+    result = T_sysmem->LockRect( 0, &lockRect, 0, D3DLOCK_DISCARD );
+    if (!FAILED(result))
+    {
+        char* dest = static_cast<char*>(lockRect.pBits);
+        memcpy(dest, texture.data(), texture.size());
+        result = T_sysmem->UnlockRect(0);
+    }
+    if (FAILED(result))
+    {
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "T_sysmem->UnlockRect(0) - FAILED", nullptr);
+    }
+    img_loaded_lod = 1;
+    g_pTexture = TW_LoadTextureFromTexture(T_sysmem, fmt, img_loaded_lod, dwWidth, dwHeight);
+}
+
+void LoadTexture()
+{
+#ifdef LoadTextureV1
+    LoadTextureV1();
+#else
+    LoadTextureV2();
+#endif
 
     g_pd3dDevice->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
     g_pd3dDevice->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
@@ -1412,6 +1534,7 @@ void LoadTexture()
 
 void LoadSubTexture()
 {
+    return;
     LPDIRECT3DTEXTURE9 pSubTexture  = nullptr;
     LPDIRECT3DSURFACE9 pDestSurface = nullptr;
     LPDIRECT3DSURFACE9 pSrcSurface  = nullptr;
