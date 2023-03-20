@@ -9,7 +9,7 @@
 #include <SDL2/SDL_syswm.h>
 
 #ifdef _WIN32
-#define UseD3DX9
+//#define UseD3DX9
 #endif
 
 #ifdef UseD3DX9
@@ -109,7 +109,7 @@ HRESULT LoadSurfaceFromSurface(IDirect3DSurface9* dst_surface,
     if (FAILED(src_surface->LockRect(&lock, nullptr, D3DLOCK_READONLY)))
         return D3DERR_INVALIDCALL;
 
-    hr = D3DXLoadSurfaceFromMemory(dst_surface, dst_palette, dst_rect, lock.pBits,
+    hr = LoadSurfaceFromMemory(dst_surface, dst_palette, dst_rect, lock.pBits,
                                    src_desc.Format, lock.Pitch, src_palette, src_rect, filter, color_key);
 
     if (FAILED(src_surface->UnlockRect()))
@@ -144,7 +144,7 @@ HRESULT LoadSurfaceFromSurface(IDirect3DSurface9* dst_surface,
 
 // wine-8.2/include/winuser.h
 
-static inline BOOL SetRect(LPRECT rect, INT left, INT top, INT right, INT bottom)
+static inline BOOL WinSetRect(LPRECT rect, INT left, INT top, INT right, INT bottom)
 {
     if (!rect) return FALSE;
     rect->left   = left;
@@ -837,7 +837,7 @@ void point_filter_argb_pixels(const BYTE *src, UINT src_row_pitch, UINT src_slic
  *   negative values for pSrcRect are allowed as we're only looking at the width and height anyway.
  *
  */
-HRESULT D3DXLoadSurfaceFromMemory(IDirect3DSurface9 *dst_surface,
+HRESULT LoadSurfaceFromMemory(IDirect3DSurface9 *dst_surface,
                                          const PALETTEENTRY *dst_palette, const RECT *dst_rect, const void *src_memory,
                                          D3DFORMAT src_format, UINT src_pitch, const PALETTEENTRY *src_palette, const RECT *src_rect,
                                          DWORD filter, D3DCOLOR color_key)
@@ -1015,7 +1015,7 @@ HRESULT D3DXLoadSurfaceFromMemory(IDirect3DSurface9 *dst_surface,
  *            D3DXERR_INVALIDDATA, if one of the surfaces is not lockable
  *
  */
-HRESULT D3DXLoadSurfaceFromSurface(IDirect3DSurface9 *dst_surface,
+HRESULT LoadSurfaceFromSurface(IDirect3DSurface9 *dst_surface,
                                           const PALETTEENTRY *dst_palette, const RECT *dst_rect, IDirect3DSurface9 *src_surface,
                                           const PALETTEENTRY *src_palette, const RECT *src_rect, DWORD filter, D3DCOLOR color_key)
 {
@@ -1042,7 +1042,7 @@ HRESULT D3DXLoadSurfaceFromSurface(IDirect3DSurface9 *dst_surface,
     src_format_desc = get_format_info(src_desc.Format);
     if (!src_rect)
     {
-        SetRect(&s, 0, 0, src_desc.Width, src_desc.Height);
+        WinSetRect(&s, 0, 0, src_desc.Width, src_desc.Height);
         src_rect = &s;
     }
     else if (src_rect->left == src_rect->right || src_rect->top == src_rect->bottom)
@@ -1067,7 +1067,7 @@ HRESULT D3DXLoadSurfaceFromSurface(IDirect3DSurface9 *dst_surface,
     dst_format_desc = get_format_info(dst_desc.Format);
     if (!dst_rect)
     {
-        SetRect(&dst_rect_temp, 0, 0, dst_desc.Width, dst_desc.Height);
+        WinSetRect(&dst_rect_temp, 0, 0, dst_desc.Width, dst_desc.Height);
         dst_rect = &dst_rect_temp;
     }
     else if (dst_rect->left == dst_rect->right || dst_rect->top == dst_rect->bottom)
@@ -1136,7 +1136,7 @@ HRESULT D3DXLoadSurfaceFromSurface(IDirect3DSurface9 *dst_surface,
     if (FAILED(lock_surface(src_surface, NULL, &lock, &temp_surface, FALSE)))
         return D3DERR_INVALIDCALL; // D3DXERR_INVALIDDATA;
 
-    hr = D3DXLoadSurfaceFromMemory(dst_surface, dst_palette, dst_rect, lock.pBits,
+    hr = LoadSurfaceFromMemory(dst_surface, dst_palette, dst_rect, lock.pBits,
                                    src_desc.Format, lock.Pitch, src_palette, src_rect, filter, color_key);
 
     if (FAILED(unlock_surface(src_surface, NULL, temp_surface, FALSE)))
@@ -1473,7 +1473,7 @@ ID3DTexture2D* TW_LoadTextureFromTexture(
         R_CHK(T_dst->GetSurfaceLevel(L_dst, &S_dst));
 
         // Copy
-        R_CHK(D3DXLoadSurfaceFromSurface(S_dst, NULL, NULL, S_src, NULL, NULL, D3DX_FILTER_NONE, 0));
+        R_CHK(LoadSurfaceFromSurface(S_dst, NULL, NULL, S_src, NULL, NULL, D3DX_FILTER_NONE, 0));
 
         // Release surfaces
         //_RELEASE(S_src);
@@ -1552,7 +1552,7 @@ void LoadSubTexture()
                                 pSrcSurface,  nullptr, srcRect,
                                 D3DX_DEFAULT, 0);
 #else
-    D3DXLoadSurfaceFromSurface(pDestSurface, nullptr, destRect,
+    LoadSurfaceFromSurface(pDestSurface, nullptr, destRect,
                                pSrcSurface,  nullptr, srcRect,
                                D3DX_DEFAULT, 0);
 #endif
