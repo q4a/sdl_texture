@@ -6,14 +6,7 @@
 #ifdef _WIN32
 #include <d3dx9.h>
 #else
-#include <unordered_map>
 #include <gli/gli.hpp>
-
-const std::unordered_map<gli::format, D3DFORMAT> gli_format_map{
-	{ gli::FORMAT_RGBA_DXT1_UNORM_BLOCK8, D3DFMT_DXT1 },
-	{ gli::FORMAT_RGBA_DXT5_UNORM_BLOCK16, D3DFMT_DXT5 },
-	{ gli::FORMAT_RGBA_DXT5_SRGB_BLOCK16, D3DFMT_DXT5 },
-};
 #endif
 
 void* d3d::OSHandle(SDL_Window* Window)
@@ -128,11 +121,13 @@ HRESULT d3d::CreateTextureFromFile(
 	return D3DXCreateTextureFromFile(device, srcfile, texture);
 #else
 
+	HRESULT hr;
+	gli::dx DX;
 	gli::texture tex = gli::load(srcfile);
 	const auto dimensions = tex.extent();
-	HRESULT hr;
+	D3DFORMAT fmt = static_cast<D3DFORMAT>(DX.translate(tex.format()).D3DFormat);
 
-	hr = device->CreateTexture(dimensions.x, dimensions.y, 1, 0, gli_format_map.at(tex.format()), D3DPOOL_MANAGED, texture, nullptr);
+	hr = device->CreateTexture(dimensions.x, dimensions.y, tex.levels(), 0, fmt, D3DPOOL_DEFAULT, texture, nullptr);
 	if (FAILED(hr))
 	{
 		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "LockRect failed", nullptr);
@@ -163,11 +158,14 @@ HRESULT d3d::CreateCubeTextureFromFile(
 	return D3DXCreateCubeTextureFromFile(device, srcfile, texture);
 #else
 
-	gli::texture_cube tex = gli::texture_cube(gli::load(srcfile));
-	const auto dimensions = tex.extent();
 	HRESULT hr;
+	gli::texture_cube tex = gli::texture_cube(gli::load(srcfile));
+	//const auto dimensions = tex.extent();
+	gli::dx DX;
+	D3DFORMAT fmt = static_cast<D3DFORMAT>(DX.translate(tex.format()).D3DFormat);
 
-	hr = device->CreateCubeTexture(dimensions.x, 1, 0, gli_format_map.at(tex.format()), D3DPOOL_MANAGED, texture, nullptr);
+
+	hr = device->CreateCubeTexture(tex.extent().x, tex.levels(), 0, fmt, D3DPOOL_DEFAULT, texture, nullptr);
 	if (FAILED(hr))
 	{
 		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "LockRect failed", nullptr);

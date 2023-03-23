@@ -30,4 +30,4 @@ private:
     IDirect3DTexture9*      _texture[6];
 #endif
 };
-#endif __skyboxH__
+#endif // __skyboxH__
