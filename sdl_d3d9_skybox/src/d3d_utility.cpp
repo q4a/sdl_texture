@@ -4,6 +4,9 @@
 #include <SDL2/SDL_syswm.h>
 
 #ifdef _WIN32
+#define UseD3DX9
+#endif
+#ifdef UseD3DX9
 #include <d3dx9.h>
 #else
 #include <gli/gli.hpp>
@@ -117,7 +120,7 @@ HRESULT d3d::CreateTextureFromFile(
 	const char *srcfile,
 	IDirect3DTexture9 **texture)
 {
-#ifdef _WIN32
+#ifdef UseD3DX9
 	return D3DXCreateTextureFromFile(device, srcfile, texture);
 #else
 
@@ -127,7 +130,7 @@ HRESULT d3d::CreateTextureFromFile(
 	const auto dimensions = tex.extent();
 	D3DFORMAT fmt = static_cast<D3DFORMAT>(DX.translate(tex.format()).D3DFormat);
 
-	hr = device->CreateTexture(dimensions.x, dimensions.y, tex.levels(), 0, fmt, D3DPOOL_DEFAULT, texture, nullptr);
+	hr = device->CreateTexture(dimensions.x, dimensions.y, tex.levels(), 0, fmt, D3DPOOL_MANAGED, texture, nullptr);
 	if (FAILED(hr))
 	{
 		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "LockRect failed", nullptr);
@@ -154,7 +157,7 @@ HRESULT d3d::CreateCubeTextureFromFile(
 	const char *srcfile,
 	IDirect3DCubeTexture9 **texture)
 {
-#ifdef _WIN32
+#ifdef UseD3DX9
 	return D3DXCreateCubeTextureFromFile(device, srcfile, texture);
 #else
 
@@ -164,8 +167,7 @@ HRESULT d3d::CreateCubeTextureFromFile(
 	gli::dx DX;
 	D3DFORMAT fmt = static_cast<D3DFORMAT>(DX.translate(tex.format()).D3DFormat);
 
-
-	hr = device->CreateCubeTexture(tex.extent().x, tex.levels(), 0, fmt, D3DPOOL_DEFAULT, texture, nullptr);
+	hr = device->CreateCubeTexture(tex.extent().x, tex.levels(), 0, fmt, D3DPOOL_MANAGED, texture, nullptr);
 	if (FAILED(hr))
 	{
 		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "LockRect failed", nullptr);
