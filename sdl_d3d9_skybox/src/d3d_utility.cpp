@@ -118,56 +118,19 @@ bool d3d::InitD3D(
 HRESULT d3d::CreateTextureFromFile(
 	IDirect3DDevice9 *device,
 	const char *srcfile,
-	IDirect3DTexture9 **texture)
+	IDirect3DTexture9 **textureD3D)
 {
 #ifdef UseD3DX9
-	return D3DXCreateTextureFromFile(device, srcfile, texture);
+	return D3DXCreateTextureFromFile(device, srcfile, textureD3D);
 #else
 
 	HRESULT hr;
 	gli::dx DX;
-	gli::texture tex = gli::load(srcfile);
-	const auto dimensions = tex.extent();
-	D3DFORMAT fmt = static_cast<D3DFORMAT>(DX.translate(tex.format()).D3DFormat);
+	gli::texture texture = gli::load(srcfile);
+	const auto dimensions = texture.extent();
+	D3DFORMAT fmt = static_cast<D3DFORMAT>(DX.translate(texture.format()).D3DFormat);
 
-	hr = device->CreateTexture(dimensions.x, dimensions.y, tex.levels(), 0, fmt, D3DPOOL_MANAGED, texture, nullptr);
-	if (FAILED(hr))
-	{
-		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "LockRect failed", nullptr);
-		return hr;
-	}
-
-	D3DLOCKED_RECT rect;
-	hr = (*texture)->LockRect( 0, &rect, 0, D3DLOCK_DISCARD );
-	if (FAILED(hr))
-	{
-		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "LockRect failed", nullptr);
-		return hr;
-	}
-	char* dest = static_cast<char*>(rect.pBits);
-	memcpy(dest, tex.data(), tex.size());
-	hr = (*texture)->UnlockRect(0);
-
-	return hr;
-#endif
-}
-
-HRESULT d3d::CreateCubeTextureFromFile(
-	IDirect3DDevice9 *device,
-	const char *srcfile,
-	IDirect3DCubeTexture9 **texture)
-{
-#ifdef UseD3DX9
-	return D3DXCreateCubeTextureFromFile(device, srcfile, texture);
-#else
-
-	HRESULT hr;
-	gli::texture_cube tex = gli::texture_cube(gli::load(srcfile));
-	//const auto dimensions = tex.extent();
-	gli::dx DX;
-	D3DFORMAT fmt = static_cast<D3DFORMAT>(DX.translate(tex.format()).D3DFormat);
-
-	hr = device->CreateCubeTexture(tex.extent().x, tex.levels(), 0, fmt, D3DPOOL_MANAGED, texture, nullptr);
+	hr = device->CreateTexture(dimensions.x, dimensions.y, texture.levels(), 0, fmt, D3DPOOL_MANAGED, textureD3D, nullptr);
 	if (FAILED(hr))
 	{
 		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "LockRect failed", nullptr);
@@ -176,20 +139,70 @@ HRESULT d3d::CreateCubeTextureFromFile(
 
 	D3DLOCKED_RECT rect;
 	char* dest;
-	auto maxface = tex.max_face();
-	for (int i = 0; i <= maxface; ++i)
+	for (size_t layer = 0; layer < texture.layers(); ++layer)
 	{
-		hr = (*texture)->LockRect( (D3DCUBEMAP_FACES)i, 0, &rect, 0, D3DLOCK_DISCARD );
-		if (FAILED(hr))
+		for (size_t face = 0; face < texture.faces(); ++face)
 		{
-			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "LockRect failed", nullptr);
-			return hr;
+			for (size_t level = 0; level < texture.levels(); ++level)
+			{
+				hr = (*textureD3D)->LockRect(level, &rect, 0, D3DLOCK_DISCARD);
+				if (FAILED(hr))
+				{
+					SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "LockRect failed", nullptr);
+					return hr;
+				}
+				dest = static_cast<char*>(rect.pBits);
+				memcpy(dest, texture.data(layer, face, level), texture.size(level));
+				hr = (*textureD3D)->UnlockRect(level);
+			}
 		}
-		dest = static_cast<char*>(rect.pBits);
-		memcpy(dest, tex[i].data(), tex[i].size());
-		hr = (*texture)->UnlockRect( (D3DCUBEMAP_FACES)i, 0 );
-		if (FAILED(hr))
-			break;
+	}
+
+	return hr;
+#endif
+}
+
+HRESULT d3d::CreateCubeTextureFromFile(
+	IDirect3DDevice9 *device,
+	const char *srcfile,
+	IDirect3DCubeTexture9 **textureD3D)
+{
+#ifdef UseD3DX9
+	return D3DXCreateCubeTextureFromFile(device, srcfile, textureD3D);
+#else
+
+	HRESULT hr;
+	gli::texture_cube texture = gli::texture_cube(gli::load(srcfile));
+	//const auto dimensions = tex.extent();
+	gli::dx DX;
+	D3DFORMAT fmt = static_cast<D3DFORMAT>(DX.translate(texture.format()).D3DFormat);
+
+	hr = device->CreateCubeTexture(texture.extent().x, texture.levels(), 0, fmt, D3DPOOL_MANAGED, textureD3D, nullptr);
+	if (FAILED(hr))
+	{
+		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "LockRect failed", nullptr);
+		return hr;
+	}
+
+	D3DLOCKED_RECT rect;
+	char* dest;
+	for (size_t layer = 0; layer < texture.layers(); ++layer)
+	{
+		for (size_t face = 0; face < texture.faces(); ++face)
+		{
+			for (size_t level = 0; level < texture.levels(); ++level)
+			{
+				hr = (*textureD3D)->LockRect((D3DCUBEMAP_FACES)face, level, &rect, 0, D3DLOCK_DISCARD);
+				if (FAILED(hr))
+				{
+					SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "LockRect failed", nullptr);
+					return hr;
+				}
+				dest = static_cast<char*>(rect.pBits);
+				memcpy(dest, texture.data(layer, face, level), texture.size(level));
+				hr = (*textureD3D)->UnlockRect((D3DCUBEMAP_FACES)face, level);
+			}
+		}
 	}
 
 	return hr;
