@@ -7,6 +7,7 @@ option(USE_CUBE "Use CubeTexture (cubemap) instead of six 2D textures" ON)
 if (NOT WIN32)
 option(USE_CONAN "Use Conan build system" OFF)
 option(USE_NINE "Use Gallium Nine for native D3D9 API" OFF)
+option(USE_OLD_DXVK "Use old DXVK Native for native D3D9 API" OFF)
 endif()
 
 if (NOT CMAKE_BUILD_TYPE)
@@ -120,7 +121,8 @@ else()
             "${NINE_NATIVE_INCLUDE_DIRS}"
         )
         add_dependencies(${PROJECT_NAME} nine-native)
-    else() # for DXVK Native
+    else() # for DXVK
+        if (USE_OLD_DXVK)
         message("Using DXVK Native for D3D9 API")
 
         ExternalProject_Add(dxvk-native
@@ -135,6 +137,25 @@ else()
             INSTALL_COMMAND   ""
         )
         ExternalProject_Get_property(dxvk-native SOURCE_DIR BINARY_DIR)
+        add_dependencies(${PROJECT_NAME} dxvk-native)
+        else() # for newer DXVK
+        message("Using DXVK for D3D9 API")
+
+        ExternalProject_Add(dxvk
+            GIT_REPOSITORY    https://github.com/doitsujin/dxvk
+            GIT_TAG           v2.3
+            GIT_SHALLOW       ON
+            BUILD_ALWAYS      OFF
+            CONFIGURE_HANDLED_BY_BUILD ON
+            CONFIGURE_COMMAND meson setup ../dxvk --buildtype=release -Denable_d3d11=true -Denable_d3d10=false -Denable_dxgi=true
+            BUILD_COMMAND     ninja
+            BUILD_BYPRODUCTS  <BINARY_DIR>/src/d3d9/libdxvk_d3d9.so
+            INSTALL_COMMAND   ""
+        )
+        ExternalProject_Get_property(dxvk SOURCE_DIR BINARY_DIR)
+        add_dependencies(${PROJECT_NAME} dxvk)
+        endif()
+
         set(DXVK_NATIVE_INCLUDE_DIRS
             "${SOURCE_DIR}/include/native/directx"
             "${SOURCE_DIR}/include/native/windows"
@@ -143,7 +164,6 @@ else()
         target_include_directories(${PROJECT_NAME} PRIVATE
             "${DXVK_NATIVE_INCLUDE_DIRS}"
         )
-        add_dependencies(${PROJECT_NAME} dxvk-native)
     endif()
 endif()
 
