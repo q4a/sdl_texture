@@ -3,6 +3,7 @@ project(sdl_d3d9_cube)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../cmake")
 
+option(USE_TEXTURE "Apply texture on 3D cube" ON)
 option(USE_CUBE "Use CubeTexture (cubemap) instead of six 2D textures" ON)
 if (NOT WIN32)
 option(USE_CONAN "Use Conan build system" OFF)
@@ -38,8 +39,11 @@ endif()
 
 # Source files
 
+if(USE_TEXTURE)
+    add_definitions(-DUseTexture)
+endif()
 if (USE_CUBE)
-    add_definitions(-DUseCubeTexture=1)
+    add_definitions(-DUseCubeTexture)
 endif()
 if (USE_NINE)
     add_definitions(-DUSE_NINE=1)
@@ -70,6 +74,7 @@ if (WIN32)
 else()
 
     include(ExternalProject)
+    if(USE_TEXTURE)
     ExternalProject_Add(gli
         GIT_REPOSITORY    https://github.com/g-truc/gli
         GIT_TAG           779b99ac6656e4d30c3b24e96e0136a59649a869
@@ -85,6 +90,7 @@ else()
          "${SOURCE_DIR}"
     )
     add_dependencies(${PROJECT_NAME} gli)
+    endif()
 
     if (USE_NINE) # for Gallium Nine
         message("Using Gallium Nine for native D3D9 API")

@@ -13,11 +13,13 @@ const int Width = 640;
 const int Height = 480;
 
 Cube*                  Box = 0;
+#ifdef UseTexture
 #ifdef UseCubeTexture
 IDirect3DCubeTexture9* Tex = 0;
 #else
 IDirect3DTexture9*     Tex = 0;
-#endif
+#endif // UseCubeTexture
+#endif // UseTexture
 
 // Additional math functions
 
@@ -61,6 +63,7 @@ D3DMATRIX* MatrixPerspectiveFovLH(D3DMATRIX* pout, float fovy, float aspect, flo
 #include <d3dx9.h>
 #else
 #include <unordered_map>
+#ifdef UseTexture
 #include <gli/gli.hpp>
 
 const std::unordered_map<gli::format, D3DFORMAT> gli_format_map{
@@ -68,6 +71,7 @@ const std::unordered_map<gli::format, D3DFORMAT> gli_format_map{
 	{ gli::FORMAT_RGBA_DXT5_UNORM_BLOCK16, D3DFMT_DXT5 },
 	{ gli::FORMAT_RGBA_DXT5_SRGB_BLOCK16, D3DFMT_DXT5 },
 };
+#endif // UseTexture
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -95,7 +99,7 @@ HRESULT CreateTextureFromFile(
 {
 #ifdef _WIN32
 	return D3DXCreateTextureFromFile(device, srcfile, texture);
-#else
+#elif defined(UseTexture)
 
 	gli::texture tex = gli::load(srcfile);
 	const auto dimensions = tex.extent();
@@ -130,7 +134,7 @@ HRESULT CreateCubeTextureFromFile(
 {
 #ifdef _WIN32
 	return D3DXCreateCubeTextureFromFile(device, srcfile, texture);
-#else
+#elif defined(UseTexture)
 
 	gli::texture_cube tex = gli::texture_cube(gli::load(srcfile));
 	const auto dimensions = tex.extent();
@@ -190,6 +194,7 @@ bool Setup()
 
 	// Create texture.
 
+#ifdef UseTexture
 #ifdef UseCubeTexture
 	CreateCubeTextureFromFile(
 		Device,
@@ -200,7 +205,8 @@ bool Setup()
 		Device,
 		"textures/cursor.dds",
 		&Tex);
-#endif
+#endif // UseCubeTexture
+#endif // UseTexture
 
 	// Set Texture Filter States.
 
@@ -225,11 +231,13 @@ bool Setup()
 void Cleanup()
 {
 	d3d::Delete<Cube*>(Box);
+#ifdef UseTexture
 #ifdef UseCubeTexture
 	d3d::Release<IDirect3DCubeTexture9*>(Tex);
 #else
 	d3d::Release<IDirect3DTexture9*>(Tex);
-#endif
+#endif // UseCubeTexture
+#endif // UseTexture
 }
 
 void ShowPrimitive()
@@ -260,8 +268,12 @@ void ShowPrimitive()
 		Device->Clear(0, 0, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xffffffff, 1.0f, 0);
 		Device->BeginScene();
 
+#ifdef UseTexture
 		Device->SetMaterial(&d3d::WHITE_MTRL);
 		Device->SetTexture(0, Tex);
+#else
+		Device->SetMaterial(&d3d::BLACK_MTRL);
+#endif
 
 		Box->draw(0, 0, 0);
 
